@@ -68,7 +68,7 @@ const Calender = () => {
 	);
 
 	const [theme, settheme] = useState({
-		value: '',
+		value: 'bg-danger',
 		label: 'Company'
 	});
 
@@ -126,7 +126,7 @@ const Calender = () => {
 			value: 'fc-event-primary',
 			label: 'Company'
 		});
-		//toggle();
+		toggle();
 	};
 
 	const showData = () => {
@@ -139,8 +139,8 @@ const Calender = () => {
 				start: new Date(),
 				end: new Date(),
 				description: value.SubTopic,
-				className: 'green',
-				type: 'green'
+				className: theme.value,
+				type: theme.value
 			};
 			events.push(newEvent);
 		});
@@ -155,7 +155,6 @@ const Calender = () => {
 					? { ...checkbox, checked: !checkbox.checked }
 					: checkbox
 		);
-
 		setCheckboxes(newCheckboxes);
 	};
 
