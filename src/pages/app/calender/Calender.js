@@ -4,6 +4,7 @@ import Head from '../../../layout/head/Head';
 import CalenderApp from '../../../components/partials/calender/Calender';
 import DatePicker from 'react-datepicker';
 import { Modal, ModalBody, ModalHeader, Button } from 'reactstrap';
+
 import {
 	Block,
 	BlockBetween,
@@ -21,6 +22,8 @@ import { useForm } from 'react-hook-form';
 import { setDateForPicker } from '../../../utils/Utils';
 // import { FaFileExport } from "react-icons/fa";
 import { read, utils } from 'xlsx';
+import { useDispatch } from 'react-redux';
+import { create } from '../../../redux/feateres/classSlice';
 
 const Calender = () => {
 	const [modal, setModal] = useState(false);
@@ -105,7 +108,7 @@ const Calender = () => {
 		const hours = Math.floor(diff / (1000 * 60 * 60) % 24);
 		setDates({ ...dates, hours: hours });
 	};
-
+	const dispatch = useDispatch();
 	const toggle = () => {
 		setModal(!modal);
 	};
@@ -130,7 +133,7 @@ const Calender = () => {
 	};
 
 	const showData = () => {
-		console.log(excelData);
+		dispatch(create([...excelData])); // saving to redux
 		const events = [];
 		excelData.map(value => {
 			let newEvent = {
