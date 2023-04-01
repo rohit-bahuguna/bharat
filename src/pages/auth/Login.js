@@ -19,38 +19,35 @@ import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { login } from '../../redux/feateres/useSlice';
+import { LogIn } from '../../utils/API/auth_API';
 
 const Login = () => {
+	const [userData, setUserData] = useState({
+		email: '',
+		password: ''
+	});
 	const [loading, setLoading] = useState(false);
 	const [passState, setPassState] = useState(false);
 	const [errorVal, setError] = useState('');
 	const dispatch = useDispatch();
-	const onFormSubmit = formData => {
-		setLoading(true);
-		const loginName = 'info@softnio.com';
-		const pass = '123456';
 
-		if (formData.name === loginName && formData.passcode === pass) {
-			dispatch(
-				login({
-					email: 'info@softnio.com',
-					password: '123456',
-					accessToken: 'token'
-				})
+	const onFormSubmit = async () => {
+		setLoading(true);
+
+		try {
+			const { data } = await LogIn(userData);
+
+			dispatch(login(data.user));
+			window.history.pushState(
+				`${process.env.PUBLIC_URL ? process.env.PUBLIC_URL : '/'}`,
+				'auth-login',
+				`${process.env.PUBLIC_URL ? process.env.PUBLIC_URL : '/'}`
 			);
-			setTimeout(() => {
-				window.history.pushState(
-					`${process.env.PUBLIC_URL ? process.env.PUBLIC_URL : '/'}`,
-					'auth-login',
-					`${process.env.PUBLIC_URL ? process.env.PUBLIC_URL : '/'}`
-				);
-				window.location.reload();
-			}, 2000);
-		} else {
-			setTimeout(() => {
-				setError('Cannot login with credentials');
-				setLoading(false);
-			}, 2000);
+			window.location.reload();
+			setLoading(false);
+		} catch (error) {
+			console.log(error);
+			setLoading(false);
 		}
 	};
 
@@ -80,9 +77,7 @@ const Login = () => {
 						<BlockHead>
 							<BlockContent>
 								<BlockTitle tag="h4">Sign-In</BlockTitle>
-								<BlockDes>
-									<p>Access Dashlite using your email and passcode.</p>
-								</BlockDes>
+								<BlockDes />
 							</BlockContent>
 						</BlockHead>
 						{errorVal &&
@@ -96,18 +91,20 @@ const Login = () => {
 							<div className="form-group">
 								<div className="form-label-group">
 									<label className="form-label" htmlFor="default-01">
-										Email or Username
+										Email
 									</label>
 								</div>
 								<div className="form-control-wrap">
 									<input
-										type="text"
+										type="email"
 										id="default-01"
 										name="name"
 										ref={register({ required: 'This field is required' })}
-										defaultValue="info@softnio.com"
+										value={userData.email}
 										placeholder="Enter your email address or username"
 										className="form-control-lg form-control"
+										onChange={e =>
+											setUserData({ ...userData, email: e.target.value })}
 									/>
 									{errors.name &&
 										<span className="invalid">
@@ -144,12 +141,14 @@ const Login = () => {
 										type={passState ? 'text' : 'password'}
 										id="password"
 										name="passcode"
-										defaultValue="123456"
+										value={userData.password}
 										ref={register({ required: 'This field is required' })}
 										placeholder="Enter your passcode"
 										className={`form-control-lg form-control ${passState
 											? 'is-hidden'
 											: 'is-shown'}`}
+										onChange={e =>
+											setUserData({ ...userData, password: e.target.value })}
 									/>
 									{errors.passcode &&
 										<span className="invalid">

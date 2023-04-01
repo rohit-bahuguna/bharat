@@ -8,11 +8,11 @@ import storage from 'redux-persist/lib/storage';
 const rootPersistConfig = {
 	key: 'root',
 	storage,
-	whiteList: ['user', 'class']
+	whiteList: ['user']
 };
 
 const rootReducer = combineReducers({
-	class: persistReducer(rootPersistConfig, classReducer),
+	classReducer,
 	user: persistReducer(rootPersistConfig, userReducer)
 });
 

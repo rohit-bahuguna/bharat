@@ -118,27 +118,29 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 			/>
 
 			<Modal isOpen={modalState} toggle={toggle} className="modal-md">
-				<ModalHeader className={event && event.className} toggle={toggle}>
-					{event && event.title}
+				<ModalHeader
+					className={event.className && event.className}
+					toggle={toggle}>
+					{event.title && event.title}
 				</ModalHeader>
 				<ModalBody>
 					<Row className="gy-3 py-1">
 						<Col sm="6">
 							<h6 className="overline-title">Start Time</h6>
 							<p id="preview-event-start">
-								{event && returnDate(event.start)}
+								{event.start && event.start.split('T')[0]}
 							</p>
 						</Col>
 						<Col sm="6" id="preview-event-end-check">
 							<h6 className="overline-title">End Time</h6>
 							<p id="preview-event-end">
-								{event && returnDate(event.end)}
+								{event.end && event.end.split('T')[0]}
 							</p>
 						</Col>
 						<Col sm="10" id="preview-event-description-check">
 							<h6 className="overline-title">Description</h6>
 							<p id="preview-event-description">
-								{event && event.description}
+								{event.description && event.description}
 							</p>
 						</Col>
 					</Row>

@@ -1,16 +1,21 @@
-import React from "react";
-import Select from "react-select";
+import React from 'react';
+import Select from 'react-select';
 
-const RSelect = ({ ...props }) => {
-  return (
-    <div className="form-control-select">
-      <Select
-        className={`react-select-container ${props.className ? props.className : ""}`}
-        classNamePrefix="react-select"
-        {...props}
-      />
-    </div>
-  );
+const RSelect = ({ options, defaultValue, getClassData, name }) => {
+	return (
+		<select onChange={getClassData} className="w-100 h-100" name={name}>
+			<option value={defaultValue}>
+				{defaultValue}
+			</option>
+			{options.map(value => {
+				return (
+					<option value={value.value}>
+						{value.name}
+					</option>
+				);
+			})}
+		</select>
+	);
 };
 
 export default RSelect;

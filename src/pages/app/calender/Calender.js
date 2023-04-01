@@ -22,65 +22,24 @@ import { useForm } from 'react-hook-form';
 import { setDateForPicker } from '../../../utils/Utils';
 // import { FaFileExport } from "react-icons/fa";
 import { read, utils } from 'xlsx';
-import { useDispatch } from 'react-redux';
-import { create } from '../../../redux/feateres/classSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+	create,
+	setClass,
+	updateClass
+} from '../../../redux/feateres/classSlice';
+import { getFaculty } from '../../../utils/API/auth_API';
+import { createClass, getClasses } from '../../../utils/API/class_API';
 
 const Calender = () => {
+	const allClasses = useSelector(state => state.classReducer.class);
+	console.log('redux', allClasses);
 	const [modal, setModal] = useState(false);
-
 	const [mockEvents, updateEvent] = useState([]);
-	const [dates, setDates] = useState({
-		startDate: new Date(),
-		startTime: new Date(),
-		endTime: new Date(),
-		endDate: new Date(),
-		hours: 0
-	});
-	console.log(dates, 'dates');
-	// import functionality
-
 	const [excelData, setExcelData] = useState([]);
-	const readExcel = async e => {
-		const file = e.target.files[0];
-		const data = await file.arrayBuffer(file);
-		const excelfile = read(data);
-		const excelsheet = excelfile.Sheets[excelfile.SheetNames[0]];
-		const exceljson = utils.sheet_to_json(excelsheet);
-		console.log(exceljson);
-		setExcelData([...exceljson]);
-	};
-
-	// time difference in the form
-
 	const [duration, setDuration] = useState(0);
-
-	useEffect(
-		() => {
-			const start = new Date(dates.startDate);
-			start.setHours(dates.startTime.getHours());
-			start.setMinutes(dates.startTime.getMinutes());
-
-			const end = new Date(dates.endDate);
-			end.setHours(dates.endTime.getHours());
-			end.setMinutes(dates.endTime.getMinutes());
-
-			const diff = (end - start) / (1000 * 60 * 60); // Difference in hours
-			setDuration(diff);
-		},
-		[dates.startTime, dates.endTime]
-	);
-
-	const [theme, settheme] = useState({
-		value: 'bg-danger',
-		label: 'Company'
-	});
-
+	const [faculty, setFaculty] = useState([]);
 	const [checkboxes, setCheckboxes] = useState([
-		{
-			id: 'firstCheckbox',
-			label: 'Completed',
-			checked: false
-		},
 		{ id: 'secondCheckbox', label: 'AWP', checked: false },
 		{ id: 'thirdCheckbox', label: 'Test', checked: false },
 		{
@@ -95,53 +54,110 @@ const Calender = () => {
 		}
 	]);
 
-	const calculateHours = () => {
-		const start = dates.startDate.setHours(
-			dates.startTime.getHours(),
-			dates.startTime.getMinutes()
-		);
-		const end = dates.endDate.setHours(
-			dates.endTime.getHours(),
-			dates.endTime.getMinutes()
-		);
-		const diff = Math.abs(end - start);
-		const hours = Math.floor(diff / (1000 * 60 * 60) % 24);
-		setDates({ ...dates, hours: hours });
+	const [dates, setDates] = useState({
+		startDate: new Date(),
+		startTime: new Date(),
+		endTime: new Date(),
+		endDate: new Date(),
+		hours: 0
+	});
+
+	const [classData, setClassData] = useState({
+		className: '',
+		faculty: '',
+		startDate: dates.startDate.toString(),
+		endDate: dates.endDate.toString(),
+		classHours: 0,
+		description: '',
+		category: '',
+		agendas: []
+	});
+
+	const getClassData = e => {
+		setClassData({ ...classData, [e.target.name]: e.target.value });
 	};
+
+	const getAllfaculty = async () => {
+		try {
+			const { data } = await getFaculty();
+			const allClass = await getClasses();
+
+			const allFaculty = data.allFaculty.map(value => {
+				return { value: value._id, name: value.name };
+			});
+			dispatch(setClass(allClass.data.classes));
+			setFaculty([...allFaculty]);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	// import functionality
+
+	const readExcel = async e => {
+		const file = e.target.files[0];
+		const data = await file.arrayBuffer(file);
+		const excelfile = read(data);
+		const excelsheet = excelfile.Sheets[excelfile.SheetNames[0]];
+		const exceljson = utils.sheet_to_json(excelsheet);
+		console.log(exceljson);
+		setExcelData([...exceljson]);
+	};
+
+	// calculating time difference in the form
+	useEffect(
+		() => {
+			const start = new Date(dates.startDate);
+			start.setHours(dates.startTime.getHours());
+			start.setMinutes(dates.startTime.getMinutes());
+
+			const end = new Date(dates.endDate);
+			end.setHours(dates.endTime.getHours());
+			end.setMinutes(dates.endTime.getMinutes());
+
+			const diff = (end - start) / (1000 * 60 * 60); // Difference in hours
+			setClassData({ ...classData, classHours: diff });
+		},
+		[dates.startTime, dates.endTime]
+	);
+
+	useEffect(() => {
+		getAllfaculty();
+	}, []);
+
+	const [theme, settheme] = useState({
+		value: 'bg-danger',
+		label: 'Company'
+	});
+
 	const dispatch = useDispatch();
 	const toggle = () => {
 		setModal(!modal);
 	};
 	const { errors, register, handleSubmit } = useForm();
 
-	const handleFormSubmit = formData => {
-		let newEvent = {
-			id: 'default-event-id-' + Math.floor(Math.random() * 9999999),
-			title: formData.Topic,
-			start: new Date(),
-			end: new Date(),
-			description: formData.SubTopic,
-			className: theme.value,
-			type: theme.value
-		};
-		updateEvent([...mockEvents, newEvent]);
-		settheme({
-			value: 'fc-event-primary',
-			label: 'Company'
-		});
-		toggle();
+	const handleFormSubmit = async e => {
+		e.preventDefault();
+		try {
+			const { data } = await createClass(classData);
+			console.log(data);
+			dispatch(updateClass(data.class));
+		} catch (error) {
+			console.log(error);
+		}
 	};
-
-	const showData = () => {
-		dispatch(create([...excelData])); // saving to redux
+	//'default-event-id-' + Math.floor(Math.random() * 9999999);
+	const displayEventsInCalender = () => {
+		// saving to redux
 		const events = [];
-		excelData.map(value => {
+		allClasses.map(value => {
+			console.log(value);
 			let newEvent = {
-				id: 'default-event-id-' + Math.floor(Math.random() * 9999999),
-				title: value.Topic,
-				start: new Date(),
-				end: new Date(),
-				description: value.SubTopic,
+				id: `default-event-id-${value._id}`,
+				title: value.className,
+				start: value.startDate,
+				end: value.endDate,
+				description: value.description,
 				className: theme.value,
 				type: theme.value
 			};
@@ -150,15 +166,28 @@ const Calender = () => {
 		updateEvent([...events]);
 	};
 
-	const handleCheckboxChange = event => {
-		const changedCheckboxId = event.target.value;
-		const newCheckboxes = checkboxes.map(
-			checkbox =>
-				checkbox.id === changedCheckboxId
-					? { ...checkbox, checked: !checkbox.checked }
-					: checkbox
-		);
-		setCheckboxes(newCheckboxes);
+	useEffect(
+		() => {
+			if (allClasses.length > 0) {
+				displayEventsInCalender();
+			}
+		},
+		[allClasses]
+	);
+
+	const handleCheckboxChange = e => {
+		if (classData.agendas.includes(e.target.value)) {
+			const newAgendas = classData.agendas.filter(value => {
+				return e.target.value !== value;
+			});
+
+			setClassData({ ...classData, agendas: [...newAgendas] });
+		} else {
+			setClassData({
+				...classData,
+				agendas: [...classData.agendas, e.target.value]
+			});
+		}
 	};
 
 	const editEvent = formData => {
@@ -193,16 +222,16 @@ const Calender = () => {
 									/>
 								</div>
 							</Button>
-							<Button color="info">
+							{/* <Button color="info">
 								<div>
 									<input
 										type="submit"
 										className="form-control"
 										value={'show data'}
-										onClick={e => showData(e)}
+										onClick={e => displayEventsInCalender(e)}
 									/>
 								</div>
-							</Button>
+							</Button> */}
 						</BlockHeadContent>
 						<BlockHeadContent>
 							<div>
@@ -227,9 +256,7 @@ const Calender = () => {
 			<Modal isOpen={modal} toggle={toggle} className="modal-md">
 				<ModalHeader toggle={toggle}>Add Class</ModalHeader>
 				<ModalBody>
-					<form
-						className="form-validate is-alter"
-						onSubmit={handleSubmit(handleFormSubmit)}>
+					<form className="form-validate is-alter" onSubmit={handleFormSubmit}>
 						<Row className="gx-4 gy-3">
 							<Col size="12">
 								<div className="form-group">
@@ -240,9 +267,9 @@ const Calender = () => {
 										<input
 											type="text"
 											id="event-title"
-											name="title"
+											name="className"
 											className="form-control"
-											ref={register({ required: true })}
+											onChange={getClassData}
 										/>
 										{errors.title &&
 											<p className="invalid">This field is required</p>}
@@ -255,15 +282,12 @@ const Calender = () => {
 										Faculty Name
 									</label>
 									<div className="form-control-wrap">
-										<input
-											type="text"
-											id="event-title"
-											name="title"
-											className="form-control"
-											ref={register({ required: true })}
+										<RSelect
+											options={faculty}
+											defaultValue={'Select Faculty'}
+											getClassData={getClassData}
+											name={'faculty'}
 										/>
-										{errors.title &&
-											<p className="invalid">This field is required</p>}
 									</div>
 								</div>
 							</Col>
@@ -289,7 +313,7 @@ const Calender = () => {
 														setDates({ ...dates, startTime: date })}
 													showTimeSelect
 													showTimeSelectOnly
-													timeIntervals={60}
+													timeIntervals={30}
 													timeCaption="Time"
 													dateFormat="h:mm aa"
 													className="form-control date-picker"
@@ -321,7 +345,7 @@ const Calender = () => {
 														setDates({ ...dates, endTime: date })}
 													showTimeSelect
 													showTimeSelectOnly
-													timeIntervals={60}
+													timeIntervals={30}
 													timeCaption="Time"
 													dateFormat="h:mm aa"
 													className="form-control date-picker"
@@ -340,7 +364,7 @@ const Calender = () => {
 										<input
 											type="number"
 											className="form-control"
-											value={duration}
+											value={classData.classHours}
 											disabled
 										/>
 									</div>
@@ -357,7 +381,7 @@ const Calender = () => {
 											className="form-control"
 											id="event-description"
 											name="description"
-											ref={register({ required: true })}
+											onChange={getClassData}
 										/>
 
 										{errors.description &&
@@ -365,34 +389,30 @@ const Calender = () => {
 									</div>
 								</div>
 							</Col>
-							<Col size="12">
+							<Col size="12 border border-danger">
 								<div className="form-group">
 									<label className="form-label">Class Category</label>
-									<div className="form-control-wrap">
-										<RSelect
-											options={eventOptions}
-											defaultValue={{
-												value: 'fc-event-primary',
-												label: 'Company'
-											}}
-											onChange={e => settheme(e)}
-										/>
-										ref={register({ required: true })}
-									</div>
+									<RSelect
+										options={eventOptions}
+										defaultValue={'Select Category'}
+										getClassData={getClassData}
+										name={'category'}
+									/>
 								</div>
 							</Col>
 							{/* --------------------------tick check box-------------------------------------- */}
-							<Col size="12">
-								<label className="form-label"> Status</label>
+							<Col size="12" className="h-50">
+								<label className="form-label"> Agendas</label>
 								<ul className="list-group list-group-horizontal gx-3 ">
 									{checkboxes.map(checkbox =>
 										<li className="list-group-item" key={checkbox.id}>
 											<input
 												className="form-check-input me-1"
 												type="checkbox"
-												value={checkbox.id}
 												id={checkbox.id}
-												onChange={handleCheckboxChange}
+												value={checkbox.label}
+												name={checkbox.label}
+												onClick={handleCheckboxChange}
 											/>
 											<label className="form-check-label" htmlFor={checkbox.id}>
 												{checkbox.label}

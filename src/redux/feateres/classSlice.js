@@ -9,11 +9,14 @@ const classSlice = createSlice({
 
 	initialState,
 	reducers: {
-		create: (state, action) => {
-			state.class = [...state.class, ...action.payload];
+		setClass: (state, action) => {
+			state.class = [...action.payload];
+		},
+		updateClass: (state, action) => {
+			state.class = [...state.class, action.payload];
 		}
 	}
 });
 
-export const { create } = classSlice.actions;
+export const { setClass, updateClass } = classSlice.actions;
 export default classSlice.reducer;

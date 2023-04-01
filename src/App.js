@@ -22,7 +22,7 @@ import { useSelector } from 'react-redux';
 console.log(process.env.PUBLIC_URL);
 
 const App = props => {
-	const auth = useSelector(state => state.user.user.accessToken);
+	const auth = useSelector(state => state.user.user.status);
 	console.log(auth);
 	return (
 		<Switch>

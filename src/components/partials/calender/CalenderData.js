@@ -37,20 +37,11 @@ var month = [
 ];
 console.log();
 export const returnDate = date => {
+	console.log('returnDate', date);
+	// 2023-04-01T17:47:13.000Z
 	if (date !== undefined) {
 		console.log(typeof date, 'from date');
-		const dateSection = date.toString().split(' ');
-		let newDate =
-			dateSection[2] +
-			' ' +
-			month.find(value => value.includes(dateSection[1])) +
-			' ' +
-			dateSection[3] +
-			' ' +
-			dateSection[4].split(':')[0] +
-			':' +
-			dateSection[4].split(':')[1];
-		return newDate;
+		return date.toString().split(' ');
 	}
 };
 
@@ -188,16 +179,12 @@ export const events = [
 ];
 
 export const eventOptions = [
-	{ value: 'fc-event-primary', label: 'Company' },
-	{ value: 'fc-event-success', label: 'Seminars' },
-	{ value: 'fc-event-info', label: 'Conferences' },
-	{ value: 'fc-event-warning', label: 'Meeting' },
-	{ value: 'fc-event-danger', label: 'Business dinners' },
-	{ value: 'fc-event-pink', label: 'Private' },
-	{ value: 'fc-event-primary-dim', label: 'Auctions' },
-	{ value: 'fc-event-success-dim', label: 'Networking Events' },
-	{ value: 'fc-event-info-dim', label: 'Product Launches' },
-	{ value: 'fc-event-warning-dim', label: 'Fundrising' },
-	{ value: 'fc-event-danger-dim', label: 'Sponsored' },
-	{ value: 'fc-event-pink-dim', label: 'Sports events' }
+	{ value: 'Physics', name: 'Physics' },
+	{ value: 'Chemistry', name: 'Chemistry' },
+	{ value: 'Math', name: 'Math' },
+	{ value: 'English', name: 'English' },
+	{ value: 'Hindi', name: 'Hindi' },
+	{ value: 'Javascript', name: 'Javascript' },
+	{ value: 'Java', name: 'Java' },
+	{ value: 'Node JS', name: 'Node JS' }
 ];
