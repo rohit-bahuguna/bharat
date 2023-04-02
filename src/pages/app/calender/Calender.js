@@ -26,10 +26,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
 	create,
 	setClass,
-	updateClass
+	updateClass,
+	updateClassFromCsv
 } from '../../../redux/feateres/classSlice';
 import { getFaculty } from '../../../utils/API/auth_API';
-import { createClass, getClasses } from '../../../utils/API/class_API';
+import {
+	createClass,
+	getClasses,
+	createClassesFromCSV
+} from '../../../utils/API/class_API';
 import { validatClassData } from './formValidation';
 
 const Calender = () => {
@@ -50,6 +55,8 @@ const Calender = () => {
 	const [excelData, setExcelData] = useState([]);
 	const [duration, setDuration] = useState(0);
 	const [faculty, setFaculty] = useState([]);
+	const [csv, setCsv] = useState();
+
 	const [checkboxes, setCheckboxes] = useState([
 		{ id: 'secondCheckbox', label: 'AWP', checked: false },
 		{ id: 'thirdCheckbox', label: 'Test', checked: false },
@@ -224,6 +231,20 @@ const Calender = () => {
 		updateEvent(filteredEvents);
 	};
 
+	const uploadFromCsv = async () => {
+		if (csv) {
+			try {
+				const { data } = await createClassesFromCSV(csv);
+				console.log(data);
+				dispatch(updateClassFromCsv(data.classes));
+			} catch (error) {
+				console.log(error);
+			}
+		} else {
+			alert('please provide a file');
+		}
+	};
+
 	return (
 		<React.Fragment>
 			<Head title="Calender" />
@@ -240,20 +261,20 @@ const Calender = () => {
 									<input
 										type="file"
 										className="form-control"
-										onChange={e => readExcel(e)}
+										onChange={e => setCsv(e.target.files[0])}
 									/>
 								</div>
 							</Button>
-							{/* <Button color="info">
+							<Button color="info">
 								<div>
 									<input
 										type="submit"
 										className="form-control"
 										value={'show data'}
-										onClick={e => displayEventsInCalender(e)}
+										onClick={uploadFromCsv}
 									/>
 								</div>
-							</Button> */}
+							</Button>
 						</BlockHeadContent>
 						<BlockHeadContent>
 							<div>

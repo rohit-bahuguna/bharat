@@ -18,3 +18,18 @@ export const getClasses = async () => {
 		withCredentials: true
 	});
 };
+
+export const createClassesFromCSV = async classData => {
+	const url = `${baseUrl}/createfromcsv`;
+
+	return await axios.post(
+		url,
+		{ file: classData },
+		{
+			headers: {
+				'content-Type': 'multipart/form-data'
+			},
+			withCredentials: true
+		}
+	);
+};

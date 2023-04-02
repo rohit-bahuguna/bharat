@@ -14,9 +14,12 @@ const classSlice = createSlice({
 		},
 		updateClass: (state, action) => {
 			state.class = [...state.class, action.payload];
+		},
+		updateClassFromCsv: (state, action) => {
+			state.class = [...state.class, ...action.payload];
 		}
 	}
 });
 
-export const { setClass, updateClass } = classSlice.actions;
+export const { setClass, updateClass, updateClassFromCsv } = classSlice.actions;
 export default classSlice.reducer;
