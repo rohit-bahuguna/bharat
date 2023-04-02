@@ -91,6 +91,7 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 
 	const handleEventClick = info => {
 		const event = events.find(item => item.id === info.event._def.publicId);
+		console.log(event);
 		updateEvent(event);
 		settheme(event.type);
 		toggle();
@@ -172,9 +173,7 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 			<Modal isOpen={edit} toggle={toggleEdit} className="modal-md">
 				<ModalHeader toggle={toggleEdit}>Edit Class</ModalHeader>
 				<ModalBody>
-					<form
-						className="form-validate is-alter"
-						onSubmit={handleSubmit(handleFormSubmit)}>
+					<form className="form-validate is-alter" onSubmit={handleFormSubmit}>
 						<Row className="gx-4 gy-3">
 							<Col size="12">
 								<div className="form-group">
