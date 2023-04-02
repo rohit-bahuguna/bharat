@@ -18,6 +18,8 @@ import { useForm } from 'react-hook-form';
 import { Col, Row, RSelect } from '../../Component';
 import { setDateForPicker } from '../../../utils/Utils';
 import { eventOptions, returnDate } from './CalenderData';
+import ClassForm from '../../../pages/app/common/ClassForm';
+import { deleteClass } from '../../../utils/API/class_API';
 
 const EventView = event => {
 	const [mouseEnter, setMouseEnter] = useState(false);
@@ -97,6 +99,21 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 		toggle();
 	};
 
+	const deleteAClass = async () => {
+		try {
+			if (event.id) {
+				const { data } = await deleteClass(event.id.split('-')[3]);
+				console.log(data);
+				toggle();
+				// toast.succes(data.message , {
+				//autoClose : 100
+				//})
+			}
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
 	return (
 		<React.Fragment>
 			<FullCalendar
@@ -123,6 +140,7 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 					className={event.className && event.className}
 					toggle={toggle}>
 					{event.title && event.title}
+					{/* {event.faculty && event.faculty} */}
 				</ModalHeader>
 				<ModalBody>
 					<Row className="gy-3 py-1">
@@ -157,13 +175,7 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 							</Button>
 						</li>
 						<li>
-							<Button
-								color="danger"
-								className="btn-dim"
-								onClick={() => {
-									toggle();
-									onDelete(event && event.id);
-								}}>
+							<Button color="danger" className="btn-dim" onClick={deleteAClass}>
 								Delete
 							</Button>
 						</li>
@@ -173,147 +185,12 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 			<Modal isOpen={edit} toggle={toggleEdit} className="modal-md">
 				<ModalHeader toggle={toggleEdit}>Edit Class</ModalHeader>
 				<ModalBody>
-					<form className="form-validate is-alter" onSubmit={handleFormSubmit}>
-						<Row className="gx-4 gy-3">
-							<Col size="12">
-								<div className="form-group">
-									<label className="form-label" htmlFor="event-title">
-										Class Title
-									</label>
-									<div className="form-control-wrap">
-										<input
-											type="text"
-											id="event-title"
-											name="title"
-											className="form-control"
-											ref={register({ required: true })}
-											defaultValue={event.title}
-										/>
-										{errors.title &&
-											<p className="invalid">This field is required</p>}
-									</div>
-								</div>
-							</Col>
-							<Col sm="6">
-								<div className="form-group">
-									<label className="form-label">Start Date &amp; Time</label>
-									<Row className="gx-2">
-										<div className="w-55">
-											<div className="form-control-wrap">
-												<DatePicker
-													selected={new Date(event.start)}
-													onChange={date =>
-														updateEvent({
-															...event,
-															start: setDateForPicker(date)
-														})}
-													className="form-control date-picker"
-												/>
-											</div>
-										</div>
-										<div className="w-45">
-											<div className="form-control-wrap has-timepicker">
-												<DatePicker
-													selected={dates.startTime}
-													onChange={date =>
-														setDates({ ...dates, startTime: date })}
-													showTimeSelect
-													showTimeSelectOnly
-													timeIntervals={15}
-													timeCaption="Time"
-													dateFormat="h:mm aa"
-													className="form-control date-picker"
-												/>
-											</div>
-										</div>
-									</Row>
-								</div>
-							</Col>
-							<Col sm="6">
-								<div className="form-group">
-									<label className="form-label">End Date &amp; Time</label>
-									<Row className="gx-2">
-										<div className="w-55">
-											<div className="form-control-wrap">
-												<DatePicker
-													selected={new Date(event.end)}
-													onChange={date =>
-														updateEvent({
-															...event,
-															end: setDateForPicker(date)
-														})}
-													className="form-control date-picker"
-												/>
-											</div>
-										</div>
-										<div className="w-45">
-											<div className="form-control-wrap has-timepicker">
-												<DatePicker
-													selected={dates.endTime}
-													onChange={date =>
-														setDates({ ...dates, endTime: date })}
-													showTimeSelect
-													showTimeSelectOnly
-													timeIntervals={15}
-													timeCaption="Time"
-													dateFormat="h:mm aa"
-													className="form-control date-picker"
-												/>
-											</div>
-										</div>
-									</Row>
-								</div>
-							</Col>
-							<Col size="12">
-								<div className="form-group">
-									<label className="form-label" htmlFor="event-description">
-										Class Description
-									</label>
-									<div className="form-control-wrap">
-										<textarea
-											className="form-control"
-											id="event-description"
-											name="description"
-											ref={register({ required: true })}
-											defaultValue={event.description}
-										/>
-										{errors.description &&
-											<p className="invalid">This field is required</p>}
-									</div>
-								</div>
-							</Col>
-							<Col size="12">
-								<div className="form-group">
-									<label className="form-label">Class Category</label>
-									<div className="form-control-wrap">
-										<RSelect
-											options={eventOptions}
-											defaultValue={event.type}
-											onChange={e => settheme(e)}
-										/>
-										ref={register({ required: true })}
-									</div>
-								</div>
-							</Col>
-							<Col size="12">
-								<ul className="d-flex justify-content-between gx-4 mt-1">
-									<li>
-										<Button type="submit" color="primary">
-											Update Class
-										</Button>
-									</li>
-									<li>
-										<Button
-											color="danger"
-											className="btn-dim"
-											onClick={toggleEdit}>
-											Discard
-										</Button>
-									</li>
-								</ul>
-							</Col>
-						</Row>
-					</form>
+					{event.id &&
+						<ClassForm
+							toggleForm={toggleEdit}
+							editClass={true}
+							id={event.id.split('-')[3]}
+						/>}
 				</ModalBody>
 			</Modal>
 		</React.Fragment>

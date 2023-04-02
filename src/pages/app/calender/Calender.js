@@ -55,7 +55,8 @@ const Calender = () => {
 				end: value.endDate,
 				description: value.description,
 				className: theme.value,
-				type: theme.value
+				type: theme.value,
+				faculty: value.faculty
 			};
 			events.push(newEvent);
 		});

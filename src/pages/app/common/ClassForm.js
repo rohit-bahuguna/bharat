@@ -12,22 +12,18 @@ import { setDateForPicker } from '../../../utils/Utils';
 // import { FaFileExport } from "react-icons/fa";
 import { read, utils } from 'xlsx';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-	create,
-	setClass,
-	updateClass,
-	updateClassFromCsv
-} from '../../../redux/feateres/classSlice';
+import { updateClass } from '../../../redux/feateres/classSlice';
 import { getFaculty } from '../../../utils/API/auth_API';
 import {
 	createClass,
-	getClasses,
-	createClassesFromCSV
+	getAclassById,
+	adminUpdateAClassById
 } from '../../../utils/API/class_API';
 import { validatClassData } from '../calender/formValidation';
 
-const ClassForm = () => {
-	const allClasses = useSelector(state => state.classReducer.class);
+const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
+	const { user } = useSelector(state => state.user);
+	console.log(user);
 	const initialErrors = {
 		classNameError: { status: false, error: '' },
 		facultyError: { status: false, error: '' },
@@ -39,11 +35,7 @@ const ClassForm = () => {
 		agendasError: { status: false, error: '' }
 	};
 
-	const [modal, setModal] = useState(false);
-	const [mockEvents, updateEvent] = useState([]);
-
 	const [faculty, setFaculty] = useState([]);
-	const [csv, setCsv] = useState();
 
 	const [checkboxes, setCheckboxes] = useState([
 		{ id: 'secondCheckbox', label: 'AWP', checked: false },
@@ -71,15 +63,14 @@ const ClassForm = () => {
 	const [classData, setClassData] = useState({
 		className: '',
 		faculty: '',
-		startDate: dates.startDate,
-		endDate: dates.endDate,
+		startDate: '',
+		endDate: '',
 		classHours: 0,
 		description: '',
 		category: '',
 		agendas: []
 	});
 
-	//	console.log(classData.endDate < classData.startDate);
 	const [error, setError] = useState({ ...initialErrors });
 
 	const getClassData = e => {
@@ -103,6 +94,11 @@ const ClassForm = () => {
 
 	useEffect(
 		() => {
+			setClassData({
+				...classData,
+				startDate: dates.startDate,
+				endDate: dates.endDate
+			});
 			setError({ ...initialErrors });
 			const start = new Date(dates.startDate);
 			start.setHours(dates.startTime.getHours());
@@ -122,50 +118,22 @@ const ClassForm = () => {
 		getAllfaculty();
 	}, []);
 
-	const [theme, settheme] = useState({
-		value: 'bg-danger',
-		label: 'Company'
-	});
-
 	const dispatch = useDispatch();
-	const toggle = () => {
-		setModal(!modal);
-	};
-	const { errors, register, handleSubmit } = useForm();
-
-	//'default-event-id-' + Math.floor(Math.random() * 9999999);
-	const displayEventsInCalender = () => {
-		// saving to redux
-		const events = [];
-		allClasses.map(value => {
-			let newEvent = {
-				id: `default-event-id-${value._id}`,
-				title: value.className,
-				start: value.startDate,
-				end: value.endDate,
-				description: value.description,
-				className: theme.value,
-				type: theme.value
-			};
-			events.push(newEvent);
-		});
-		updateEvent([...events]);
-	};
-
-	useEffect(
-		() => {
-			if (allClasses.length > 0) {
-				displayEventsInCalender();
-			}
-		},
-		[allClasses]
-	);
 
 	const handleCheckboxChange = e => {
 		if (classData.agendas.includes(e.target.value)) {
 			const newAgendas = classData.agendas.filter(value => {
 				return e.target.value !== value;
 			});
+			const newCkeckBox = checkboxes.map(value => {
+				if (!newAgendas.includes(value.label)) {
+					return { ...value, ckecked: false };
+				} else {
+					return value;
+				}
+			});
+
+			setCheckboxes([...newCkeckBox]);
 
 			setClassData({ ...classData, agendas: [...newAgendas] });
 		} else {
@@ -173,19 +141,28 @@ const ClassForm = () => {
 				...classData,
 				agendas: [...classData.agendas, e.target.value]
 			});
+			const newCkeckBox = checkboxes.map(value => {
+				if (classData.agendas.includes(value.label)) {
+					return { ...value, ckecked: true };
+				} else {
+					return value;
+				}
+			});
+			setCheckboxes([...newCkeckBox]);
 		}
 	};
 
-	const editEvent = formData => {
-		let newEvents = [...mockEvents];
-		const index = newEvents.findIndex(item => item.id === formData.id);
-		newEvents[index] = formData;
-		updateEvent(newEvents);
-	};
-
-	const deleteEvent = id => {
-		let filteredEvents = mockEvents.filter(item => item.id !== id);
-		updateEvent(filteredEvents);
+	const updateCheckBoxes = () => {
+		const newCkeckBoxes = checkboxes.map(value => {
+			if (classData.agendas.includes(value.label)) {
+				console.log(value);
+				return { ...value, checked: true };
+			} else {
+				return value;
+			}
+		});
+		console.log(newCkeckBoxes);
+		setCheckboxes([...newCkeckBoxes]);
 	};
 
 	const handleFormSubmit = async e => {
@@ -206,6 +183,75 @@ const ClassForm = () => {
 		}
 	};
 
+	const updateAClass = async e => {
+		e.preventDefault();
+		const { errors, success } = validatClassData(classData, dates);
+
+		if (success) {
+			try {
+				const { data } = await adminUpdateAClassById(classData, id);
+				console.log(data);
+				//dispatch(updateClass(data.class));
+
+				toggleForm();
+			} catch (error) {
+				console.log(error);
+			}
+		} else {
+			setError({ ...error, ...errors });
+		}
+	};
+
+	useEffect(
+		() => {
+			(async () => {
+				if (id) {
+					try {
+						const {
+							data: {
+								data: {
+									className,
+									agendas,
+									category,
+									classHours,
+									faculty,
+									endDate,
+									startDate,
+									description
+								}
+							}
+						} = await getAclassById(id);
+
+						setClassData({
+							className,
+							faculty,
+							startDate,
+							endDate,
+							classHours,
+							description,
+							category,
+							agendas
+						});
+					} catch (error) {
+						console.log(error);
+					}
+				}
+			})();
+		},
+		[id]
+	);
+
+	useEffect(
+		() => {
+			if (id) {
+				updateCheckBoxes();
+			}
+		},
+		[classData]
+	);
+
+	console.log(classData);
+
 	return (
 		<form className="form-validate is-alter" onSubmit={handleFormSubmit}>
 			<Row className="gx-4 gy-3">
@@ -221,6 +267,7 @@ const ClassForm = () => {
 								name="className"
 								className="form-control"
 								onChange={getClassData}
+								value={classData.className}
 							/>
 						</div>
 						{error.classNameError.status
@@ -257,7 +304,11 @@ const ClassForm = () => {
 							<div className="w-55">
 								<div className="form-control-wrap">
 									<DatePicker
-										selected={dates.startDate}
+										selected={
+											classData.startDate !== ''
+												? new Date(classData.startDate.split('T')[0])
+												: dates.startDate
+										}
 										onChange={date => setDates({ ...dates, startDate: date })}
 										className="form-control date-picker"
 									/>
@@ -292,7 +343,11 @@ const ClassForm = () => {
 							<div className="w-55">
 								<div className="form-control-wrap">
 									<DatePicker
-										selected={dates.endDate}
+										selected={
+											classData.endDate !== ''
+												? new Date(classData.endDate.split('T')[0])
+												: dates.endDate
+										}
 										onChange={date => setDates({ ...dates, endDate: date })}
 										className="form-control date-picker"
 									/>
@@ -351,6 +406,7 @@ const ClassForm = () => {
 								className="form-control"
 								id="event-description"
 								name="description"
+								value={classData.description}
 								onChange={getClassData}
 							/>
 						</div>
@@ -386,6 +442,7 @@ const ClassForm = () => {
 								<input
 									className="form-check-input me-1"
 									type="checkbox"
+									checked={checkbox.checked}
 									id={checkbox.id}
 									value={checkbox.label}
 									name={checkbox.label}
@@ -401,12 +458,19 @@ const ClassForm = () => {
 				<Col size="12">
 					<ul className="d-flex justify-content-between gx-4 mt-1">
 						<li>
-							<Button type="submit" color="primary">
-								Add Class
-							</Button>
+							{id === null
+								? <Button type="submit" color="primary">
+										Add Class
+									</Button>
+								: <Button onClick={updateAClass} color="primary">
+										Update Class
+									</Button>}
 						</li>
 						<li>
-							<Button color="danger" className="btn-dim" onClick={toggle}>
+							<Button
+								color="danger"
+								className="btn-dim"
+								onClick={() => toggleForm()}>
 								Discard
 							</Button>
 						</li>

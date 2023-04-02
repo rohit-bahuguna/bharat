@@ -33,3 +33,30 @@ export const createClassesFromCSV = async classData => {
 		}
 	);
 };
+
+export const getAclassById = async id => {
+	const url = `${baseUrl}/getclassbyid/${id}`;
+	return await axios.get(url, {
+		withCredentials: true
+	});
+};
+
+export const adminUpdateAClassById = async (classData, id) => {
+	const url = `${baseUrl}/adminupdate/${id}`;
+
+	return await axios.put(
+		url,
+		{ ...classData },
+		{
+			withCredentials: true
+		}
+	);
+};
+
+export const deleteClass = async id => {
+	const url = `${baseUrl}/delete/${id}`;
+
+	return await axios.delete(url, {
+		withCredentials: true
+	});
+};
