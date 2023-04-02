@@ -1,20 +1,26 @@
 import React from 'react';
-import Select from 'react-select';
 
 const RSelect = ({ options, defaultValue, getClassData, name }) => {
 	return (
-		<select onChange={getClassData} className="w-100 h-100" name={name}>
-			<option value={defaultValue}>
-				{defaultValue}
-			</option>
-			{options.map(value => {
-				return (
-					<option value={value.value}>
-						{value.name}
-					</option>
-				);
-			})}
-		</select>
+		<div className="form-group  field-focus-box-shadow">
+			<select
+				onChange={getClassData}
+				className="custom-select  form-control-wrap field-padding-y-lg  w-100"
+				name={name}>
+				<option
+					value={defaultValue}
+					className="field-padding-y-lg field-font-weight field-font-size">
+					{defaultValue}
+				</option>
+				{options.map(value => {
+					return (
+						<option value={value.value}>
+							{value.name}
+						</option>
+					);
+				})}
+			</select>
+		</div>
 	);
 };
 

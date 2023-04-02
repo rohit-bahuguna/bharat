@@ -38,7 +38,7 @@ var month = [
 console.log();
 export const returnDate = date => {
 	console.log('returnDate', date);
-	// 2023-04-01T17:47:13.000Z
+
 	if (date !== undefined) {
 		console.log(typeof date, 'from date');
 		return date.toString().split(' ');

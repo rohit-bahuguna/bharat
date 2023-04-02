@@ -30,10 +30,21 @@ import {
 } from '../../../redux/feateres/classSlice';
 import { getFaculty } from '../../../utils/API/auth_API';
 import { createClass, getClasses } from '../../../utils/API/class_API';
+import { validatClassData } from './formValidation';
 
 const Calender = () => {
 	const allClasses = useSelector(state => state.classReducer.class);
-	console.log('redux', allClasses);
+	const initialErrors = {
+		classNameError: { status: false, error: '' },
+		facultyError: { status: false, error: '' },
+		startDateError: { status: false, error: '' },
+		endDateError: { status: false, error: '' },
+		classHoursError: { status: false, error: '' },
+		descriptionError: { status: false, error: '' },
+		categoryError: { status: false, error: '' },
+		agendasError: { status: false, error: '' }
+	};
+
 	const [modal, setModal] = useState(false);
 	const [mockEvents, updateEvent] = useState([]);
 	const [excelData, setExcelData] = useState([]);
@@ -65,15 +76,19 @@ const Calender = () => {
 	const [classData, setClassData] = useState({
 		className: '',
 		faculty: '',
-		startDate: dates.startDate.toString(),
-		endDate: dates.endDate.toString(),
+		startDate: dates.startDate,
+		endDate: dates.endDate,
 		classHours: 0,
 		description: '',
 		category: '',
 		agendas: []
 	});
 
+	//	console.log(classData.endDate < classData.startDate);
+	const [error, setError] = useState({ ...initialErrors });
+
 	const getClassData = e => {
+		setError({ ...initialErrors });
 		setClassData({ ...classData, [e.target.name]: e.target.value });
 	};
 
@@ -107,6 +122,7 @@ const Calender = () => {
 	// calculating time difference in the form
 	useEffect(
 		() => {
+			setError({ ...initialErrors });
 			const start = new Date(dates.startDate);
 			start.setHours(dates.startTime.getHours());
 			start.setMinutes(dates.startTime.getMinutes());
@@ -138,12 +154,19 @@ const Calender = () => {
 
 	const handleFormSubmit = async e => {
 		e.preventDefault();
-		try {
-			const { data } = await createClass(classData);
-			console.log(data);
-			dispatch(updateClass(data.class));
-		} catch (error) {
-			console.log(error);
+		const { errors, success } = validatClassData(classData, dates);
+
+		if (success) {
+			try {
+				const { data } = await createClass(classData);
+				console.log(data);
+				dispatch(updateClass(data.class));
+				toggle();
+			} catch (error) {
+				console.log(error);
+			}
+		} else {
+			setError({ ...error, ...errors });
 		}
 	};
 	//'default-event-id-' + Math.floor(Math.random() * 9999999);
@@ -151,7 +174,6 @@ const Calender = () => {
 		// saving to redux
 		const events = [];
 		allClasses.map(value => {
-			console.log(value);
 			let newEvent = {
 				id: `default-event-id-${value._id}`,
 				title: value.className,
@@ -271,9 +293,12 @@ const Calender = () => {
 											className="form-control"
 											onChange={getClassData}
 										/>
-										{errors.title &&
-											<p className="invalid">This field is required</p>}
 									</div>
+									{error.classNameError.status
+										? <p className="text-danger">
+												{error.classNameError.error}
+											</p>
+										: ''}
 								</div>
 							</Col>
 							<Col size="12">
@@ -288,6 +313,11 @@ const Calender = () => {
 											getClassData={getClassData}
 											name={'faculty'}
 										/>
+										{error.facultyError.status
+											? <p className="text-danger">
+													{error.facultyError.error}
+												</p>
+											: ''}
 									</div>
 								</div>
 							</Col>
@@ -320,6 +350,11 @@ const Calender = () => {
 												/>
 											</div>
 										</div>
+										{error.startDateError.status
+											? <p className="text-danger">
+													{error.startDateError.error}
+												</p>
+											: ''}
 									</Row>
 								</div>
 							</Col>
@@ -352,6 +387,11 @@ const Calender = () => {
 												/>
 											</div>
 										</div>
+										{error.endDateError.status
+											? <p className="text-danger">
+													{error.endDateError.error}
+												</p>
+											: ''}
 									</Row>
 								</div>
 							</Col>
@@ -368,6 +408,11 @@ const Calender = () => {
 											disabled
 										/>
 									</div>
+									{error.classHoursError.status
+										? <p className="text-danger">
+												{error.classHoursError.error}
+											</p>
+										: ''}
 								</div>
 							</div>
 
@@ -383,13 +428,15 @@ const Calender = () => {
 											name="description"
 											onChange={getClassData}
 										/>
-
-										{errors.description &&
-											<p className="invalid">This field is required</p>}
 									</div>
+									{error.descriptionError.status
+										? <p className="text-danger">
+												{error.descriptionError.error}
+											</p>
+										: ''}
 								</div>
 							</Col>
-							<Col size="12 border border-danger">
+							<Col size="12 ">
 								<div className="form-group">
 									<label className="form-label">Class Category</label>
 									<RSelect
@@ -398,6 +445,11 @@ const Calender = () => {
 										getClassData={getClassData}
 										name={'category'}
 									/>
+									{error.categoryError.status
+										? <p className="text-danger">
+												{error.categoryError.error}
+											</p>
+										: ''}
 								</div>
 							</Col>
 							{/* --------------------------tick check box-------------------------------------- */}
