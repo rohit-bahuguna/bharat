@@ -81,7 +81,7 @@ export const validateUserData = (userData, validateForLogIn = false) => {
 	return { success, errors };
 };
 
-export const validatClassData = (classData, dates) => {
+export const validatClassData = classData => {
 	let success = true;
 	let errors = {};
 
@@ -110,7 +110,7 @@ export const validatClassData = (classData, dates) => {
 		success = false;
 	}
 
-	if (dates.startDate > dates.endDate) {
+	if (classData.startDate > classData.endDate) {
 		errors = {
 			...errors,
 			startDateError: {
@@ -122,7 +122,7 @@ export const validatClassData = (classData, dates) => {
 		success = false;
 	}
 
-	if (dates.endDate < dates.startDate) {
+	if (classData.endDate < classData.startDate) {
 		errors = {
 			...errors,
 			endDateError: {

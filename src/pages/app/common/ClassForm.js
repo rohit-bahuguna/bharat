@@ -12,7 +12,7 @@ import { setDateForPicker } from '../../../utils/Utils';
 // import { FaFileExport } from "react-icons/fa";
 import { read, utils } from 'xlsx';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateClass } from '../../../redux/feateres/classSlice';
+import { setClass, updateClass } from '../../../redux/feateres/classSlice';
 import { getFaculty } from '../../../utils/API/auth_API';
 import {
 	createClass,
@@ -20,10 +20,11 @@ import {
 	adminUpdateAClassById
 } from '../../../utils/API/class_API';
 import { validatClassData } from '../calender/formValidation';
+import { toast, ToastContainer } from 'react-toastify';
 
 const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
-	const { user } = useSelector(state => state.user);
-	console.log(user);
+	const { user, classReducer } = useSelector(state => state);
+	const dispatch = useDispatch();
 	const initialErrors = {
 		classNameError: { status: false, error: '' },
 		facultyError: { status: false, error: '' },
@@ -51,24 +52,21 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 			checked: false
 		}
 	]);
-
-	const [dates, setDates] = useState({
-		startDate: new Date(),
-		startTime: new Date(),
-		endTime: new Date(),
-		endDate: new Date(),
-		hours: 0
+	const [defaultValue, setDefaultValue] = useState({
+		faculty: 'Select Faculty',
+		category: 'Select Category'
 	});
-
 	const [classData, setClassData] = useState({
 		className: '',
 		faculty: '',
-		startDate: '',
-		endDate: '',
+		startDate: new Date(),
+		endDate: new Date(),
 		classHours: 0,
 		description: '',
 		category: '',
-		agendas: []
+		agendas: [],
+		startTime: new Date(),
+		endTime: new Date()
 	});
 
 	const [error, setError] = useState({ ...initialErrors });
@@ -94,31 +92,40 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 
 	useEffect(
 		() => {
-			setClassData({
-				...classData,
-				startDate: dates.startDate,
-				endDate: dates.endDate
-			});
 			setError({ ...initialErrors });
-			const start = new Date(dates.startDate);
-			start.setHours(dates.startTime.getHours());
-			start.setMinutes(dates.startTime.getMinutes());
+			const start = new Date(classData.startDate);
+			start.setHours(classData.startTime.getHours());
+			start.setMinutes(classData.startTime.getMinutes());
 
-			const end = new Date(dates.endDate);
-			end.setHours(dates.endTime.getHours());
-			end.setMinutes(dates.endTime.getMinutes());
+			const end = new Date(classData.endDate);
+			end.setHours(classData.endTime.getHours());
+			end.setMinutes(classData.endTime.getMinutes());
 
 			const diff = (end - start) / (1000 * 60 * 60); // Difference in hours
-			setClassData({ ...classData, classHours: diff });
+			setClassData({
+				...classData,
+				classHours: diff,
+				startDate: start,
+				endDate: end
+			});
 		},
-		[dates.startTime, dates.endTime]
+		[classData.startTime, classData.endTime]
 	);
 
 	useEffect(() => {
 		getAllfaculty();
 	}, []);
 
-	const dispatch = useDispatch();
+	const getFacultyName = id => {
+		const data = faculty.filter(data => data.value === id);
+
+		return data[0].name;
+	};
+
+	const filterFaculty = id => {
+		const newFaculties = faculty.filter(data => data.value !== id);
+		setFaculty([...newFaculties]);
+	};
 
 	const handleCheckboxChange = e => {
 		if (classData.agendas.includes(e.target.value)) {
@@ -161,20 +168,25 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 				return value;
 			}
 		});
-		console.log(newCkeckBoxes);
+		// console.log(newCkeckBoxes);
 		setCheckboxes([...newCkeckBoxes]);
 	};
 
 	const handleFormSubmit = async e => {
 		e.preventDefault();
-		const { errors, success } = validatClassData(classData, dates);
+		const { errors, success } = validatClassData(classData);
 
 		if (success) {
 			try {
 				const { data } = await createClass(classData);
-				console.log(data);
+
 				dispatch(updateClass(data.class));
-				toggleForm();
+				toast.success(data.message, {
+					autoClose: 1000
+				});
+				setTimeout(() => {
+					toggleForm();
+				}, 1000);
 			} catch (error) {
 				console.log(error);
 			}
@@ -185,13 +197,18 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 
 	const updateAClass = async e => {
 		e.preventDefault();
-		const { errors, success } = validatClassData(classData, dates);
+		const { errors, success } = validatClassData(classData);
 
 		if (success) {
 			try {
 				const { data } = await adminUpdateAClassById(classData, id);
-				console.log(data);
+
 				//dispatch(updateClass(data.class));
+				const filteredClasses = classReducer.class.filter(
+					value => value._id !== id
+				);
+				filteredClasses.push(data.updatedClass);
+				dispatch(setClass(filteredClasses));
 
 				toggleForm();
 			} catch (error) {
@@ -225,12 +242,14 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 						setClassData({
 							className,
 							faculty,
-							startDate,
-							endDate,
+							startDate: new Date(startDate),
+							endDate: new Date(endDate),
 							classHours,
 							description,
 							category,
-							agendas
+							agendas,
+							startTime: new Date(startDate),
+							endTime: new Date(endDate)
 						});
 					} catch (error) {
 						console.log(error);
@@ -250,10 +269,25 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 		[classData]
 	);
 
-	console.log(classData);
-
+	useEffect(
+		() => {
+			if (id && classData.faculty !== '') {
+				const name = getFacultyName(classData.faculty);
+				if (name) {
+					filterFaculty(id);
+					setDefaultValue({
+						faculty: name,
+						category: classData.category
+					});
+				}
+			}
+		},
+		[id, classData.faculty]
+	);
+	console.log(classData, faculty);
 	return (
 		<form className="form-validate is-alter" onSubmit={handleFormSubmit}>
+			<ToastContainer />
 			<Row className="gx-4 gy-3">
 				<Col size="12">
 					<div className="form-group">
@@ -285,7 +319,7 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 						<div className="form-control-wrap">
 							<RSelect
 								options={faculty}
-								defaultValue={'Select Faculty'}
+								defaultValue={defaultValue.faculty}
 								getClassData={getClassData}
 								name={'faculty'}
 							/>
@@ -304,12 +338,9 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 							<div className="w-55">
 								<div className="form-control-wrap">
 									<DatePicker
-										selected={
-											classData.startDate !== ''
-												? new Date(classData.startDate.split('T')[0])
-												: dates.startDate
-										}
-										onChange={date => setDates({ ...dates, startDate: date })}
+										selected={classData.startDate}
+										onChange={date =>
+											setClassData({ ...classData, startDate: date })}
 										className="form-control date-picker"
 									/>
 								</div>
@@ -317,15 +348,21 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 							<div className="w-45">
 								<div className="form-control-wrap has-timepicker">
 									<DatePicker
-										selected={dates.startTime}
-										onChange={date => setDates({ ...dates, startTime: date })}
+										selected={classData.startTime}
+										onChange={date =>
+											setClassData({ ...classData, startTime: date })}
 										showTimeSelect
 										showTimeSelectOnly
-										timeIntervals={30}
 										timeCaption="Time"
-										dateFormat="h:mm aa"
+										dateFormat=" hh:mm aa"
 										className="form-control date-picker"
 									/>
+									{/* <input
+										type="time"
+										onChange={e => {
+											console.log(e.target.value);
+										}}
+									/> */}
 								</div>
 							</div>
 							{error.startDateError.status
@@ -343,12 +380,9 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 							<div className="w-55">
 								<div className="form-control-wrap">
 									<DatePicker
-										selected={
-											classData.endDate !== ''
-												? new Date(classData.endDate.split('T')[0])
-												: dates.endDate
-										}
-										onChange={date => setDates({ ...dates, endDate: date })}
+										selected={classData.endDate}
+										onChange={date =>
+											setClassData({ ...classData, endDate: date })}
 										className="form-control date-picker"
 									/>
 								</div>
@@ -356,13 +390,14 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 							<div className="w-45">
 								<div className="form-control-wrap has-timepicker">
 									<DatePicker
-										selected={dates.endTime}
-										onChange={date => setDates({ ...dates, endTime: date })}
+										selected={classData.endTime}
+										onChange={date =>
+											setClassData({ ...classData, endTime: date })}
 										showTimeSelect
 										showTimeSelectOnly
 										timeIntervals={30}
 										timeCaption="Time"
-										dateFormat="h:mm aa"
+										dateFormat="hh:mm aa"
 										className="form-control date-picker"
 									/>
 								</div>
@@ -422,7 +457,7 @@ const ClassForm = ({ toggleForm, editClass = false, id = null }) => {
 						<label className="form-label">Class Category</label>
 						<RSelect
 							options={eventOptions}
-							defaultValue={'Select Category'}
+							defaultValue={defaultValue.category}
 							getClassData={getClassData}
 							name={'category'}
 						/>

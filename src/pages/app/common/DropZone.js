@@ -5,6 +5,7 @@ import { Button } from 'reactstrap';
 import { useDispatch } from 'react-redux';
 import { updateClassFromCsv } from '../../../redux/feateres/classSlice';
 import { createClassesFromCSV } from '../../../utils/API/class_API';
+import { toast, ToastContainer } from 'react-toastify';
 
 const DropZone = ({ toggleCsvForm }) => {
 	const [file, setFiles] = useState();
@@ -23,7 +24,10 @@ const DropZone = ({ toggleCsvForm }) => {
 				const { data } = await createClassesFromCSV(file);
 				console.log(data);
 				dispatch(updateClassFromCsv(data.classes));
-				toggleCsvForm();
+				toast.success("All Classes Uploaded Successfully", { autoClose: 1000 });
+				setTimeout(() => {
+					toggleCsvForm();
+				}, 1000);
 			} catch (error) {
 				console.log(error);
 			}
@@ -32,8 +36,10 @@ const DropZone = ({ toggleCsvForm }) => {
 		}
 	};
 
-	return (
+	return (<>
+		<ToastContainer />
 		<Dropzone onDrop={acceptedFiles => handleDropChange(acceptedFiles)}>
+			
 			{({ getRootProps, getInputProps }) =>
 				<section>
 					{fileName === ''
@@ -58,7 +64,9 @@ const DropZone = ({ toggleCsvForm }) => {
 								</Button>
 							</div>}
 				</section>}
-		</Dropzone>
+		</Dropzone>I
+	</>
+		
 	);
 };
 

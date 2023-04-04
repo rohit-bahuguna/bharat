@@ -9,7 +9,7 @@ import Error404Classic from './pages/error/404-classic';
 import Error404Modern from './pages/error/404-modern';
 import Error504Modern from './pages/error/504-modern';
 import Error504Classic from './pages/error/504-classic';
-
+import 'react-toastify/dist/ReactToastify.css';
 import Faq from './pages/others/Faq';
 import Terms from './pages/others/Terms';
 

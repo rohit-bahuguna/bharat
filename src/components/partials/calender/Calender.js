@@ -20,6 +20,11 @@ import { setDateForPicker } from '../../../utils/Utils';
 import { eventOptions, returnDate } from './CalenderData';
 import ClassForm from '../../../pages/app/common/ClassForm';
 import { deleteClass } from '../../../utils/API/class_API';
+import { toast, ToastContainer } from 'react-toastify';
+import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { setClass } from '../../../redux/feateres/classSlice';
+import { getFacultyName } from '../../../utils/helper/helperFunctions';
 
 const EventView = event => {
 	const [mouseEnter, setMouseEnter] = useState(false);
@@ -45,7 +50,7 @@ const EventView = event => {
 };
 
 const CalenderApp = ({ events, onDelete, onEdit }) => {
-	//console.log(events);
+	const allClasses = useSelector(state => state.classReducer.class);
 	const [modalState, updateModal] = useState(false);
 	const [mockEvents, updateEvents] = useState(events);
 	const [event, updateEvent] = useState({});
@@ -64,7 +69,7 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 		},
 		[events]
 	);
-
+	const dispatch = useDispatch();
 	const { errors, register, handleSubmit } = useForm();
 
 	const handleFormSubmit = formData => {
@@ -103,11 +108,17 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 		try {
 			if (event.id) {
 				const { data } = await deleteClass(event.id.split('-')[3]);
-				console.log(data);
-				toggle();
-				// toast.succes(data.message , {
-				//autoClose : 100
-				//})
+				const updatedClasses = allClasses.filter(
+					value => value._id !== event.id.split('-')[3]
+				);
+
+				toast.success(data.message, {
+					autoClose: 1000
+				});
+				dispatch(setClass(updatedClasses));
+				setTimeout(() => {
+					toggle();
+				}, 1000);
 			}
 		} catch (error) {
 			console.log(error);
@@ -115,7 +126,8 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 	};
 
 	return (
-		<React.Fragment>
+		<>
+			<ToastContainer />
 			<FullCalendar
 				plugins={[dayGridPlugin, timeGridPlugin, listPlugin, bootstrapPlugin]}
 				events={mockEvents}
@@ -141,6 +153,7 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 					toggle={toggle}>
 					{event.title && event.title}
 					{/* {event.faculty && event.faculty} */}
+					{/* getFacultyName(event.faculty ) */}
 				</ModalHeader>
 				<ModalBody>
 					<Row className="gy-3 py-1">
@@ -193,7 +206,7 @@ const CalenderApp = ({ events, onDelete, onEdit }) => {
 						/>}
 				</ModalBody>
 			</Modal>
-		</React.Fragment>
+		</>
 	);
 };
 
